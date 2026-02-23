@@ -1,0 +1,80 @@
+﻿@model IEnumerable<UngDungOnThiBangLai.Models.QuestionListViewModel>
+
+@{
+    ViewData["Title"] = "Quản lý câu hỏi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-question-square-fill text-primary"></i> DANH SÁCH CÂU HỎI</h2>
+    <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Thêm câu hỏi mới</a>
+</div>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-5">
+                <input type="text" name="searchString" class="form-control" placeholder="Tìm kiếm nội dung câu hỏi...">
+            </div>
+            <div class="col-md-3">
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Tất cả hạng bằng --</option>
+                    @foreach (var cat in ViewBag.Categories)
+                    {
+                        <option value="@cat.Id">@cat.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Lọc dữ liệu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle bg-white">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 5%">ID</th>
+                <th style="width: 10%">Ảnh</th>
+                <th style="width: 45%">Nội dung câu hỏi</th>
+                <th style="width: 10%">Hạng</th>
+                <th style="width: 10%">Loại</th>
+                <th style="width: 20%" class="text-center">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" class="img-thumbnail" style="width: 80px;">
+                        }
+                        else
+                        {
+                            <span class="text-muted small">Không ảnh</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.IsCritical)
+                        {
+                            <span class="badge bg-danger me-1">Điểm liệt</span>
+                        }
+                        @item.QuestionText
+                    </td>
+                    <td><span class="badge bg-info text-dark">@item.CategoryName</span></td>
+                    <td><small>@item.QuestionType</small></td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <a href="#" class="btn btn-sm btn-outline-warning" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                            <a href="#" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="return confirm('Bạn chắc chắn muốn xóa?')"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

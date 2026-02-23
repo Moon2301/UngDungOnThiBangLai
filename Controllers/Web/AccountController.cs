@@ -6,10 +6,8 @@ using System.Text;
 using UngDungOnThiBangLai.Models;
 using BCrypt.Net;
 
-namespace UngDungOnThiBangLai.Controllers
+namespace UngDungOnThiBangLai.Controllers.Web
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;

@@ -1,0 +1,68 @@
+﻿@model UngDungOnThiBangLai.Models.CreateQuestionViewModel
+
+@{
+    ViewData["Title"] = "Thêm câu hỏi mới";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0"><i class="bi bi-plus-circle"></i> THÊM CÂU HỎI MỚI</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nội dung câu hỏi</label>
+                            <textarea asp-for="QuestionText" class="form-control" rows="4" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                            <span asp-validation-for="QuestionText" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Giải thích đáp án</label>
+                            <textarea asp-for="Explanation" class="form-control" rows="3" placeholder="Giải thích tại sao đáp án đó đúng..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Hạng bằng lái</label>
+                            <select asp-for="LicenseCategoryId" class="form-select">
+                                <option value="">-- Chọn hạng bằng --</option>
+                                @foreach (var cat in ViewBag.Categories)
+                                {
+                                    <option value="@cat.Id">@cat.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ảnh minh họa (Sa hình/Biển báo)</label>
+                            <input type="file" asp-for="ImageFile" class="form-control" accept="image/*" />
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch mt-4">
+                                <input asp-for="IsCritical" class="form-check-input" type="checkbox">
+                                <label class="form-check-label fw-bold text-danger">Câu hỏi điểm liệt</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                    <button type="submit" class="btn btn-success px-4">Lưu câu hỏi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
