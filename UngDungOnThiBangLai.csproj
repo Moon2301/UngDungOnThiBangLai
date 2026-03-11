@@ -22,7 +22,7 @@
   <ItemGroup>
     <Folder Include="Controllers\API\" />
     <Folder Include="Models\NewFolder\" />
-    <Folder Include="wwwroot\IMG\" />
+    <Folder Include="wwwroot\images\questions\" />
   </ItemGroup>
 
 </Project>

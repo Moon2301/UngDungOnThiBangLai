@@ -3,110 +3,61 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin Panel</title>
+    <title>@ViewData["Title"] - Admin OnThi</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    @await RenderSectionAsync("Styles", required: false)
-    <style>
-        body {
-            overflow-x: hidden;
-        }
-
-        #sidebar-wrapper {
-            min-height: 100vh;
-            margin-left: -15rem;
-            transition: margin .25s ease-out;
-        }
-
-            #sidebar-wrapper .sidebar-heading {
-                padding: 0.875rem 1.25rem;
-                font-size: 1.2rem;
-            }
-
-            #sidebar-wrapper .list-group {
-                width: 15rem;
-            }
-
-        #page-content-wrapper {
-            min-width: 100vw;
-        }
-
-        body.sb-sidenav-toggled #sidebar-wrapper {
-            margin-left: 0;
-        }
-
-        @@media (min-width: 768px) {
-            #sidebar-wrapper {
-                margin-left: 0;
-            }
-
-            #page-content-wrapper {
-                min-width: 0;
-                width: 100%;
-            }
-
-            body.sb-sidenav-toggled #sidebar-wrapper {
-                margin-left: -15rem;
-            }
-        }
-    </style>
+    @RenderSection("Styles", required: false) @* Thêm dòng này để sửa lỗi InvalidOperationException *@
 </head>
 <body>
-    <div class="d-flex" id="wrapper">
-        <div class="border-end bg-dark text-white" id="sidebar-wrapper">
-            <div class="sidebar-heading border-bottom bg-dark fw-bold text-uppercase text-primary">
-                <i class="bi bi-shield-check"></i> Driving Admin
-            </div>
-            <div class="list-group list-group-flush">
-                <a class="list-group-item list-group-item-action bg-dark text-white p-3 border-0" asp-controller="AdminDashboard" asp-action="Index">
-                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                </a>
-                <a class="list-group-item list-group-item-action bg-dark text-white p-3 border-0" href="#">
-                    <i class="bi bi-card-list me-2"></i> Hạng bằng lái
-                </a>
-                <a class="list-group-item list-group-item-action bg-dark text-white p-3 border-0"
-                   asp-controller="Question" asp-action="Index">
-                    <i class="bi bi-question-square me-2"></i> Quản lý câu hỏi
-                </a>
-                <a class="list-group-item list-group-item-action bg-dark text-white p-3 border-0" href="#">
-                    <i class="bi bi-people me-2"></i> Người dùng
-                </a>
-                <a class="list-group-item list-group-item-action bg-dark text-white p-3 border-0 border-top mt-5" asp-controller="Account" asp-action="AdminLogin">
-                    <i class="bi bi-box-arrow-left me-2"></i> Đăng xuất
-                </a>
-            </div>
-        </div>
-
-        <div id="page-content-wrapper">
-            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
-                <div class="container-fluid">
-                    <button class="btn btn-primary btn-sm" id="sidebarToggle"><i class="bi bi-list"></i></button>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse shadow">
+                <div class="position-sticky pt-3">
+                    <h3 class="text-center py-4 fw-bold">ADMIN PANEL</h3>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminDashboard" ? "active" : "")"
+                               asp-controller="AdminDashboard" asp-action="Index">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Question" ? "active" : "")"
+                               asp-controller="Question" asp-action="Index">
+                                <i class="bi bi-question-circle"></i> Quản lý câu hỏi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person-badge"></i> Hạng bằng lái
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "TrafficSign" ? "active" : "")"
+                               asp-controller="TrafficSign"
+                               asp-action="Index">
+                                <i class="bi bi-signpost-2"></i> <span>Quản lý biển báo</span>
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link text-warning" asp-controller="Account" asp-action="AdminLogin">
+                                <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </nav>
 
-            <div class="container-fluid p-4">
-                <main role="main">
-                    @RenderBody()
-                </main>
-            </div>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                @RenderBody()
+            </main>
         </div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded', event => {
-            const sidebarToggle = document.body.querySelector('#sidebarToggle');
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', event => {
-                    event.preventDefault();
-                    document.body.classList.toggle('sb-sidenav-toggled');
-                });
-            }
-        });
-    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
