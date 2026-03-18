@@ -69,6 +69,14 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="bi bi-tags-fill text-primary"></i> Chương câu hỏi (Phân loại)</label>
+                            @* Sửa lại asp-for="QuestionTopicId" và thêm id để JS bắt sự kiện *@
+                            <select asp-for="QuestionTopicId" id="QuestionTopicId" class="form-select shadow-sm border-2" required>
+                                <option value="">-- Chọn hạng bằng trước --</option>
+                            </select>
+                            <span asp-validation-for="QuestionTopicId" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label fw-bold">Tiêu đề câu hỏi</label>
                             <textarea asp-for="QuestionText" class="form-control" rows="4" placeholder="Nhập nội dung câu hỏi tại đây..." required></textarea>
                             <span asp-validation-for="QuestionText" class="text-danger"></span>
@@ -324,6 +332,32 @@
             $('.answer-item').each(function() {
                 initDragAndDrop($(this).find('.answer-image-section'));
             });
+        });
+                $('#LicenseCategoryId').change(function () {
+            var categoryId = $(this).val();
+            var topicSelect = $('#QuestionTopicId');
+
+            // Reset dropdown chương
+            topicSelect.empty().append('<option value="">-- Đang tải chương... --</option>');
+
+            if (categoryId) {
+                $.ajax({
+                    url: '/Question/GetTopicsByCategory', // Đường dẫn đến API trong Controller
+                    type: 'GET',
+                    data: { categoryId: categoryId },
+                    success: function (data) {
+                        topicSelect.empty().append('<option value="">-- Chọn chương --</option>');
+                        $.each(data, function (index, item) {
+                            topicSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                    },
+                    error: function() {
+                        topicSelect.empty().append('<option value="">-- Lỗi tải dữ liệu --</option>');
+                    }
+                });
+            } else {
+                topicSelect.empty().append('<option value="">-- Chọn hạng bằng trước --</option>');
+            }
         });
     </script>
 }

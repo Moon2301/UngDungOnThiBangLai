@@ -1,0 +1,100 @@
+﻿@using UngDungOnThiBangLai.Models
+@model LicenseCategory
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Danh mục</a></li>
+                    <li class="breadcrumb-item active">Thêm hạng bằng mới</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary py-3">
+                    <h4 class="mb-0 fw-bold text-white"><i class="bi bi-plus-square-fill me-2"></i>THÊM HẠNG BẰNG MỚI</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Tên hạng bằng (A1, B2, ...)</label>
+                                <input asp-for="Name" class="form-control form-control-lg border-2 shadow-sm" placeholder="Nhập tên hạng bằng..." required />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tổng số câu hỏi/đề</label>
+                                <div class="input-group custom-input-group">
+                                    <span class="input-group-text"><i class="bi bi-list-ol"></i></span>
+                                    <input asp-for="TotalQuestions" type="number" class="form-control" value="25">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Thời gian thi (Phút)</label>
+                                <div class="input-group custom-input-group">
+                                    <span class="input-group-text"><i class="bi bi-stopwatch"></i></span>
+                                    <input asp-for="TimeLimit" type="number" class="form-control" value="19">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-success">Số câu đúng tối thiểu</label>
+                                <div class="input-group custom-input-group border-success-subtle">
+                                    <span class="input-group-text bg-success-subtle"><i class="bi bi-check-circle text-success"></i></span>
+                                    <input asp-for="MinimumPassScore" type="number" class="form-control" value="21">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">Số câu điểm liệt/đề</label>
+                                <div class="input-group custom-input-group border-danger-subtle">
+                                    <span class="input-group-text bg-danger-subtle"><i class="bi bi-exclamation-octagon text-danger"></i></span>
+                                    <input asp-for="TotalCriticalQuestions" type="number" class="form-control" value="1">
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted">Mô tả ngắn</label>
+                                <textarea asp-for="Description" class="form-control shadow-sm" rows="3" placeholder="Ví dụ: Dùng cho xe mô tô 2 bánh có dung tích xi lanh dưới 175cm3..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 d-flex gap-2 justify-content-end">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-primary px-5 shadow-sm fw-bold">
+                                <i class="bi bi-cloud-check-fill me-1"></i> TẠO MỚI
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-input-group {
+        border: 2px solid #dee2e6;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+        overflow: hidden;
+    }
+
+        .custom-input-group:focus-within {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+        }
+
+        .custom-input-group .form-control {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .custom-input-group .input-group-text {
+            border: none !important;
+            background-color: #f8f9fa;
+        }
+</style>

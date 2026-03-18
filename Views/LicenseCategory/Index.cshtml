@@ -1,0 +1,59 @@
+﻿@using UngDungOnThiBangLai.Models
+@model IEnumerable<LicenseCategory>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-card-checklist text-primary"></i> QUẢN LÝ HẠNG BẰNG</h2>
+    </div>
+
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-2 custom-hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary fs-5 px-3">@item.Name</span>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-gear-fill"></i> Cấu hình
+                            </a>
+                        </div>
+                        <h6 class="text-muted mb-3">@item.Description</h6>
+                        <hr>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Số câu đề thi:</small>
+                                <strong>@item.TotalQuestions câu</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Thời gian:</small>
+                                <strong>@item.TimeLimit phút</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Điểm đạt:</small>
+                                <strong class="text-success">@item.MinimumPassScore câu</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Câu điểm liệt:</small>
+                                <strong class="text-danger">@item.TotalCriticalQuestions câu</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .custom-hover-card {
+        transition: all 0.3s ease;
+        border-color: #f0f0f0;
+    }
+
+        .custom-hover-card:hover {
+            transform: translateY(-5px);
+            border-color: #0d6efd; /* Đậm viền khi hover */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+</style>

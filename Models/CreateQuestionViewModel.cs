@@ -8,6 +8,7 @@
         public string? Explanation { get; set; }
         public bool IsCritical { get; set; }
         public string QuestionType { get; set; } = "MultipleChoice";
+        public int QuestionTopicId { get; set; }
 
         // Hứng file ảnh tải lên
         public IFormFile? ImageFile { get; set; }

@@ -51,23 +51,41 @@
     <div class="card shadow-sm mb-4 border-0">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="searchString" class="form-control border-start-0" placeholder="Tìm kiếm nội dung câu hỏi...">
+                        <input type="text" name="searchString" class="form-control border-start-0" placeholder="Tìm nội dung..." value="@Context.Request.Query["searchString"]">
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <select name="categoryId" class="form-select">
-                        <option value="">-- Tất cả hạng bằng --</option>
+                <div class="col-md-2">
+                    <select name="categoryId" id="categoryIdFilter" class="form-select">
+                        <option value="">-- Tất cả hạng --</option>
                         @foreach (var cat in ViewBag.Categories)
                         {
-                            <option value="@cat.Id">@cat.Name</option>
+                            <!option value="@cat.Id" @(ViewBag.SelectedCategory?.ToString() == cat.Id.ToString() ? "selected" : "")>@cat.Name</!option>
                         }
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-dark w-100">Lọc dữ liệu</button>
+
+                @* FIX: Sửa lại phần Select Topic *@
+                <div class="col-md-3">
+                    <select name="topicId" id="topicIdFilter" class="form-select">
+                        <option value="">-- Tất cả chương --</option>
+                        @if (ViewBag.Topics != null)
+                        {
+                            @foreach (var t in ViewBag.Topics)
+                            {
+                                <!option value="@t.Id" @(Context.Request.Query["topicId"] == t.Id.ToString() ? "selected" : "")>@t.Name</!option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-dark w-100">Lọc</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
+                    </div>
                 </div>
             </form>
         </div>
@@ -95,6 +113,9 @@
                         <div class="flex-grow-1">
                             <div class="mb-2">
                                 <span class="badge bg-info text-dark me-2">Hạng @item.CategoryName</span>
+                                @* HIỂN THỊ TÊN CHƯƠNG *@
+                                <span class="badge bg-secondary me-2">@item.TopicName</span>
+
                                 @if (item.IsCritical)
                                 {
                                     <span class="badge badge-critical">CÂU ĐIỂM LIỆT</span>
@@ -106,11 +127,11 @@
                         </div>
 
                         <div class="ms-auto text-end" style="min-width: 150px;">
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm border-0" title="Chỉnh sửa">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm border-0">
                                 <i class="bi bi-pencil-fill fs-5"></i>
                             </a>
-                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa câu hỏi này không?')">
-                                <button type="submit" class="btn btn-outline-danger btn-sm border-0" title="Xóa">
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Xóa câu hỏi này?')">
+                                <button type="submit" class="btn btn-outline-danger btn-sm border-0">
                                     <i class="bi bi-trash-fill fs-5"></i>
                                 </button>
                             </form>
@@ -121,3 +142,25 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Lắng nghe sự kiện change của select Category
+            $('select[name="categoryId"]').change(function () {
+                var catId = $(this).val();
+                var topicSelect = $('select[name="topicId"]'); // Đã khớp với name="topicId" ở trên
+
+                topicSelect.empty().append('<option value="">-- Tất cả chương --</option>');
+
+                if (catId) {
+                    $.getJSON('/Question/GetTopicsByCategory', { categoryId: catId }, function (data) {
+                        $.each(data, function (i, item) {
+                            topicSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+}

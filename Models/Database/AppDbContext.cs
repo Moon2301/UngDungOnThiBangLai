@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using UngDungOnThiBangLai.Models;
 using BCrypt.Net;
+using UngDungOnThiBangLai.Models;
 
 public class AppDbContext : DbContext
 {
@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
 
     public DbSet<LicenseCategory> LicenseCategories { get; set; }
     public DbSet<Question> Questions { get; set; }
+    public DbSet<QuestionTopic> QuestionTopics { get; set; }
     public DbSet<Answer> Answers { get; set; }
     public DbSet<TrafficSign> TrafficSigns { get; set; }
     public DbSet<User> Users { get; set; }
@@ -71,6 +72,12 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.Username).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
         });
+
+        modelBuilder.Entity<Question>()
+        .HasOne(q => q.Topic)
+        .WithMany(t => t.Questions)
+        .HasForeignKey(q => q.QuestionTopicId)
+        .OnDelete(DeleteBehavior.Restrict);
 
         // --- SEED DATA ---
         // Hạng bằng lái
