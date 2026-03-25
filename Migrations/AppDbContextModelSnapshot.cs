@@ -53,6 +53,98 @@ namespace UngDungOnThiBangLai.Migrations
                     b.ToTable("Answers");
                 });
 
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.Exam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LicenseCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PassingScore")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeLimit")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalQuestions")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LicenseCategoryId");
+
+                    b.ToTable("Exams");
+                });
+
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.ExamQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("ExamQuestions");
+                });
+
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.ExamResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsPassed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RawData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("TakenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExamResults");
+                });
+
             modelBuilder.Entity("UngDungOnThiBangLai.Models.LicenseCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -90,21 +182,21 @@ namespace UngDungOnThiBangLai.Migrations
                         {
                             Id = 1,
                             Description = "Xe máy dưới 175cc",
-                            MinimumPassScore = 0,
+                            MinimumPassScore = 21,
                             Name = "A1",
-                            TimeLimit = 0,
-                            TotalCriticalQuestions = 0,
-                            TotalQuestions = 0
+                            TimeLimit = 19,
+                            TotalCriticalQuestions = 1,
+                            TotalQuestions = 25
                         },
                         new
                         {
                             Id = 2,
                             Description = "Ô tô con số sàn",
-                            MinimumPassScore = 0,
+                            MinimumPassScore = 32,
                             Name = "B2",
-                            TimeLimit = 0,
-                            TotalCriticalQuestions = 0,
-                            TotalQuestions = 0
+                            TimeLimit = 22,
+                            TotalCriticalQuestions = 1,
+                            TotalQuestions = 35
                         });
                 });
 
@@ -125,15 +217,12 @@ namespace UngDungOnThiBangLai.Migrations
                     b.Property<bool>("IsCritical")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LicenseCategoryId")
+                    b.Property<int?>("LicenseCategoryId")
                         .HasColumnType("int");
 
                     b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("QuestionTopicId")
-                        .HasColumnType("int");
 
                     b.Property<string>("QuestionType")
                         .IsRequired()
@@ -145,8 +234,6 @@ namespace UngDungOnThiBangLai.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LicenseCategoryId");
-
-                    b.HasIndex("QuestionTopicId");
 
                     b.HasIndex("TrafficSignId");
 
@@ -179,6 +266,21 @@ namespace UngDungOnThiBangLai.Migrations
                     b.HasIndex("LicenseCategoryId");
 
                     b.ToTable("QuestionTopics");
+                });
+
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.QuestionTopicQuestion", b =>
+                {
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionTopicId")
+                        .HasColumnType("int");
+
+                    b.HasKey("QuestionId", "QuestionTopicId");
+
+                    b.HasIndex("QuestionTopicId");
+
+                    b.ToTable("QuestionTopicQuestions");
                 });
 
             modelBuilder.Entity("UngDungOnThiBangLai.Models.TrafficSign", b =>
@@ -263,7 +365,7 @@ namespace UngDungOnThiBangLai.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Credit = 0,
                             Email = "admin@onthi.com",
-                            PasswordHash = "$2a$11$eE85bEQZNOwVr4jq8VN0JuVRsnskmJSJNbobBk0w4XovkrD2fMRnC",
+                            PasswordHash = "$2a$11$XKT1ECVKwYdGNMjAxre5UuMH6XOg0uZMKijHcpm6QwuVH0JKV9AS2",
                             Role = "Admin",
                             Username = "admin"
                         });
@@ -287,28 +389,46 @@ namespace UngDungOnThiBangLai.Migrations
                     b.Navigation("TrafficSign");
                 });
 
-            modelBuilder.Entity("UngDungOnThiBangLai.Models.Question", b =>
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.Exam", b =>
                 {
                     b.HasOne("UngDungOnThiBangLai.Models.LicenseCategory", "LicenseCategory")
-                        .WithMany("Questions")
+                        .WithMany()
                         .HasForeignKey("LicenseCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LicenseCategory");
+                });
+
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.ExamQuestion", b =>
+                {
+                    b.HasOne("UngDungOnThiBangLai.Models.Exam", "Exam")
+                        .WithMany("ExamQuestions")
+                        .HasForeignKey("ExamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("UngDungOnThiBangLai.Models.QuestionTopic", "Topic")
-                        .WithMany("Questions")
-                        .HasForeignKey("QuestionTopicId")
+                    b.HasOne("UngDungOnThiBangLai.Models.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.Question", b =>
+                {
+                    b.HasOne("UngDungOnThiBangLai.Models.LicenseCategory", null)
+                        .WithMany("Questions")
+                        .HasForeignKey("LicenseCategoryId");
 
                     b.HasOne("UngDungOnThiBangLai.Models.TrafficSign", "TrafficSign")
                         .WithMany("Questions")
                         .HasForeignKey("TrafficSignId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("LicenseCategory");
-
-                    b.Navigation("Topic");
 
                     b.Navigation("TrafficSign");
                 });
@@ -316,7 +436,7 @@ namespace UngDungOnThiBangLai.Migrations
             modelBuilder.Entity("UngDungOnThiBangLai.Models.QuestionTopic", b =>
                 {
                     b.HasOne("UngDungOnThiBangLai.Models.LicenseCategory", "LicenseCategory")
-                        .WithMany()
+                        .WithMany("QuestionTopics")
                         .HasForeignKey("LicenseCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -324,14 +444,42 @@ namespace UngDungOnThiBangLai.Migrations
                     b.Navigation("LicenseCategory");
                 });
 
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.QuestionTopicQuestion", b =>
+                {
+                    b.HasOne("UngDungOnThiBangLai.Models.Question", "Question")
+                        .WithMany("QuestionTopics")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UngDungOnThiBangLai.Models.QuestionTopic", "QuestionTopic")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuestionTopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("QuestionTopic");
+                });
+
+            modelBuilder.Entity("UngDungOnThiBangLai.Models.Exam", b =>
+                {
+                    b.Navigation("ExamQuestions");
+                });
+
             modelBuilder.Entity("UngDungOnThiBangLai.Models.LicenseCategory", b =>
                 {
+                    b.Navigation("QuestionTopics");
+
                     b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("UngDungOnThiBangLai.Models.Question", b =>
                 {
                     b.Navigation("Answers");
+
+                    b.Navigation("QuestionTopics");
                 });
 
             modelBuilder.Entity("UngDungOnThiBangLai.Models.QuestionTopic", b =>

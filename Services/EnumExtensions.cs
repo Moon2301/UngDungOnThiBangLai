@@ -2,7 +2,7 @@
 using System.Reflection;
 
 
-namespace UngDungOnThiBangLai.Helpers
+namespace UngDungOnThiBangLai.Services
 {
     public static class EnumExtensions
     {

@@ -141,6 +141,49 @@
             </div>
         }
     </div>
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @* Nút Quay lại *@
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-page="@(ViewBag.CurrentPage - 1)"
+                       asp-route-searchString="@ViewBag.SearchString"
+                       asp-route-categoryId="@ViewBag.CategoryId"
+                       asp-route-topicId="@ViewBag.TopicId">Trước</a>
+                </li>
+
+                @* Hiển thị danh sách số trang *@
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    @if (i == 1 || i == ViewBag.TotalPages || (i >= ViewBag.CurrentPage - 2 && i <= ViewBag.CurrentPage + 2))
+                    {
+                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@i"
+                               asp-route-searchString="@ViewBag.SearchString"
+                               asp-route-categoryId="@ViewBag.CategoryId"
+                               asp-route-topicId="@ViewBag.TopicId">@i</a>
+                        </li>
+                    }
+                    else if (i == ViewBag.CurrentPage - 3 || i == ViewBag.CurrentPage + 3)
+                    {
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    }
+                }
+
+                @* Nút Tiếp *@
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-page="@(ViewBag.CurrentPage + 1)"
+                       asp-route-searchString="@ViewBag.SearchString"
+                       asp-route-categoryId="@ViewBag.CategoryId"
+                       asp-route-topicId="@ViewBag.TopicId">Sau</a>
+                </li>
+            </ul>
+        </nav>
+    }
 </div>
 
 @section Scripts {

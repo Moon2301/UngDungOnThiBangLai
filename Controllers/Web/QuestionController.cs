@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using UngDungOnThiBangLai.Models;
 using UngDungOnThiBangLai.Models;
 
 namespace UngDungOnThiBangLai.Controllers.Web
@@ -15,127 +15,6 @@ namespace UngDungOnThiBangLai.Controllers.Web
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
-        }
-
-        // Hàm helper dùng chung cho Create và Edit
-        private async Task<string?> ProcessUploadedFile(IFormFile? imageFile)
-        {
-            if (imageFile == null || imageFile.Length == 0) return null;
-
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "questions");
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await imageFile.CopyToAsync(fileStream);
-            }
-
-            return "/images/questions/" + uniqueFileName;
-        }
-
-        public async Task<IActionResult> Index(string searchString, int? categoryId, int? topicId)
-        {
-            var query = _context.Questions
-                .Include(q => q.LicenseCategory)
-                .Include(q => q.Topic) // Load thêm bảng Topic mới
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-                query = query.Where(q => q.QuestionText.Contains(searchString));
-
-            if (categoryId.HasValue)
-                query = query.Where(q => q.LicenseCategoryId == categoryId);
-
-            if (topicId.HasValue)
-                query = query.Where(q => q.QuestionTopicId == topicId);
-
-            var result = await query.Select(q => new QuestionListViewModel
-            {
-                Id = q.Id,
-                QuestionText = q.QuestionText,
-                ImageUrl = q.ImageUrl,
-                IsCritical = q.IsCritical,
-                CategoryName = q.LicenseCategory.Name,
-                TopicName = q.Topic.Name, 
-                QuestionType = q.QuestionType
-            }).ToListAsync();
-
-            ViewBag.Categories = await _context.LicenseCategories.ToListAsync();
-            // Nếu đã chọn Category, nạp sẵn danh sách Topic tương ứng để hiển thị lại bộ lọc
-            if (categoryId.HasValue)
-            {
-                ViewBag.Topics = await _context.QuestionTopics
-                    .Where(t => t.LicenseCategoryId == categoryId)
-                    .ToListAsync();
-            }
-
-            return View(result);
-        }
-
-        [HttpGet]
-        public async Task<JsonResult> GetTopicsByCategory(int categoryId)
-        {
-            var topics = await _context.QuestionTopics
-                .Where(t => t.LicenseCategoryId == categoryId)
-                .Select(t => new { id = t.Id, name = t.Name })
-                .ToListAsync();
-            return Json(topics);
-        }
-
-        [HttpGet]
-        public IActionResult Create()
-        {
-            ViewBag.Categories = _context.LicenseCategories.ToList();
-            ViewBag.Topics = new List<QuestionTopic>();
-            return View(new CreateQuestionViewModel
-            {
-                Answers = new List<AnswerViewModel> { new AnswerViewModel(), new AnswerViewModel() }
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateQuestionViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                string? questionImageUrl = await SaveFile(model.ImageFile, "questions");
-
-                var question = new Question
-                {
-                    LicenseCategoryId = model.LicenseCategoryId,
-                    QuestionText = model.QuestionText,
-                    Explanation = model.Explanation,
-                    IsCritical = model.IsCritical,
-                    QuestionType = "MultipleChoice",
-                    QuestionTopicId = model.QuestionTopicId,
-                    ImageUrl = questionImageUrl,
-                    Answers = new List<Answer>() // Đảm bảo không bị Null
-                };
-
-                if (model.Answers != null)
-                {
-                    foreach (var a in model.Answers)
-                    {
-                        string? answerImageUrl = await SaveFile(a.ImageFile, "answers");
-                        question.Answers.Add(new Answer
-                        {
-                            AnswerText = a.AnswerText,
-                            IsCorrect = a.IsCorrect,
-                            ImageUrl = answerImageUrl
-                        });
-                    }
-                }
-
-                _context.Questions.Add(question);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewBag.Categories = await _context.LicenseCategories.ToListAsync();
-            return View(model);
         }
 
         // --- HELPER METHODS ---
@@ -163,124 +42,309 @@ namespace UngDungOnThiBangLai.Controllers.Web
             if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
         }
 
+        // ================== INDEX ==================
+        public async Task<IActionResult> Index(string searchString, int? categoryId, int? topicId, int page = 1)
+        {
+            int pageSize = 20;
+
+            // 1. Eager Loading qua bảng trung gian
+            var query = _context.Questions
+                .Include(q => q.QuestionTopics)
+                    .ThenInclude(qt => qt.QuestionTopic)
+                        .ThenInclude(t => t.LicenseCategory)
+                .AsQueryable();
+
+            // 2. Lọc dữ liệu
+            if (!string.IsNullOrEmpty(searchString))
+                query = query.Where(q => q.QuestionText.Contains(searchString));
+
+            // Truy vấn xuyên qua bảng trung gian QuestionTopicQuestion
+            if (categoryId.HasValue)
+                query = query.Where(q => q.QuestionTopics.Any(qt => qt.QuestionTopic.LicenseCategoryId == categoryId));
+
+            if (topicId.HasValue)
+                query = query.Where(q => q.QuestionTopics.Any(qt => qt.QuestionTopicId == topicId));
+
+            // 3. Tính toán phân trang
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            page = page < 1 ? 1 : page;
+            if (page > totalPages && totalPages > 0) page = totalPages;
+
+            // 4. Map sang ViewModel
+            var result = await query
+                .OrderByDescending(q => q.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(q => new QuestionListViewModel
+                {
+                    Id = q.Id,
+                    QuestionText = q.QuestionText,
+                    ImageUrl = q.ImageUrl,
+                    IsCritical = q.IsCritical,
+                    QuestionType = q.QuestionType,
+                    // Vì 1 câu hỏi có thể thuộc NHIỀU hạng/chương, ta nối chuỗi lại để hiển thị
+                    CategoryName = string.Join(", ", q.QuestionTopics.Select(qt => qt.QuestionTopic.LicenseCategory.Name).Distinct()),
+                    TopicName = string.Join(", ", q.QuestionTopics.Select(qt => qt.QuestionTopic.Name).Distinct())
+                }).ToListAsync();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.SearchString = searchString;
+            ViewBag.CategoryId = categoryId;
+            ViewBag.TopicId = topicId;
+
+            ViewBag.Categories = await _context.LicenseCategories.ToListAsync();
+            if (categoryId.HasValue)
+            {
+                ViewBag.Topics = await _context.QuestionTopics
+                    .Where(t => t.LicenseCategoryId == categoryId.Value)
+                    .ToListAsync();
+            }
+
+            return View(result);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetTopicsByCategory(int categoryId)
+        {
+            var topics = await _context.QuestionTopics
+                .Where(t => t.LicenseCategoryId == categoryId)
+                .Select(t => new { id = t.Id, name = t.Name })
+                .ToListAsync();
+            return Json(topics);
+        }
+
+        // ================== CREATE ==================
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            ViewBag.Categories = new SelectList(await _context.LicenseCategories.ToListAsync(), "Id", "Name");
+
+            return View(new CreateQuestionViewModel
+            {
+                Answers = new List<AnswerViewModel> { new AnswerViewModel(), new AnswerViewModel() }
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateQuestionViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                string? questionImageUrl = await SaveFile(model.ImageFile, "questions");
+                if (string.IsNullOrEmpty(questionImageUrl))
+                {
+                    questionImageUrl = Request.Form["ImageUrl"];
+                }
+
+                // Khởi tạo câu hỏi mới (Không còn LicenseCategoryId hay QuestionTopicId)
+                var question = new Question
+                {
+                    QuestionText = model.QuestionText,
+                    Explanation = model.Explanation,
+                    IsCritical = model.IsCritical,
+                    QuestionType = "MultipleChoice",
+                    ImageUrl = questionImageUrl,
+                    Answers = new List<Answer>(),
+                    QuestionTopics = new List<QuestionTopicQuestion>() // Khởi tạo List cho bảng trung gian
+                };
+
+                // Nếu người dùng chọn Topic từ giao diện, thêm mapping vào bảng trung gian
+                if (model.QuestionTopicId > 0)
+                {
+                    question.QuestionTopics.Add(new QuestionTopicQuestion
+                    {
+                        QuestionTopicId = model.QuestionTopicId
+                    });
+                }
+
+                if (model.Answers != null)
+                {
+                    foreach (var a in model.Answers)
+                    {
+                        string? answerImageUrl = await SaveFile(a.ImageFile, "answers");
+                        question.Answers.Add(new Answer
+                        {
+                            AnswerText = a.AnswerText,
+                            IsCorrect = a.IsCorrect,
+                            ImageUrl = answerImageUrl
+                        });
+                    }
+                }
+
+                _context.Questions.Add(question);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.Categories = new SelectList(await _context.LicenseCategories.ToListAsync(), "Id", "Name", model.LicenseCategoryId);
+            return View(model);
+        }
+
+        // ================== EDIT ==================
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
+            // Cần Include QuestionTopics để lấy thông tin mapping hiện tại
             var question = await _context.Questions
                 .Include(q => q.Answers)
+                .Include(q => q.QuestionTopics)
+                    .ThenInclude(qt => qt.QuestionTopic)
                 .FirstOrDefaultAsync(q => q.Id == id);
 
             if (question == null) return NotFound();
 
+            // Giả định UI Edit hiện tại chỉ hỗ trợ gán vào 1 Topic (Lấy topic đầu tiên để bind lên UI)
+            var currentMapping = question.QuestionTopics.FirstOrDefault();
+            int currentTopicId = currentMapping?.QuestionTopicId ?? 0;
+            int currentCategoryId = currentMapping?.QuestionTopic?.LicenseCategoryId ?? 0;
+
+            var categories = await _context.LicenseCategories.ToListAsync();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name", currentCategoryId);
+            ViewBag.ImageUrl = question.ImageUrl;
+
             var model = new CreateQuestionViewModel
             {
-                Id = question.Id, // Đảm bảo gán Id để dùng trong form
-                QuestionTopicId = question.QuestionTopicId, 
+                Id = question.Id,
+                LicenseCategoryId = currentCategoryId,
+                QuestionTopicId = currentTopicId,
                 QuestionText = question.QuestionText,
-                LicenseCategoryId = question.LicenseCategoryId,
                 Explanation = question.Explanation,
                 IsCritical = question.IsCritical,
                 QuestionType = question.QuestionType,
                 Answers = question.Answers.Select(a => new AnswerViewModel
                 {
                     AnswerText = a.AnswerText,
-                    IsCorrect = a.IsCorrect
+                    IsCorrect = a.IsCorrect,
+                    imgUrl = a.ImageUrl
                 }).ToList()
             };
 
-            ViewBag.Categories = _context.LicenseCategories.ToList();
-            ViewBag.ImageUrl = question.ImageUrl;
             return View(model);
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CreateQuestionViewModel model)
         {
-            // 1. Load câu hỏi kèm theo danh sách đáp án
-            var question = await _context.Questions.Include(q => q.Answers).FirstOrDefaultAsync(q => q.Id == id);
+            var question = await _context.Questions
+                .Include(q => q.Answers)
+                .Include(q => q.QuestionTopics) // Phải Include để sửa bảng trung gian
+                .FirstOrDefaultAsync(q => q.Id == id);
+
             if (question == null) return NotFound();
 
             if (ModelState.IsValid)
             {
-                // 2. Xử lý ảnh câu hỏi
-                if (model.ImageFile != null) // Có upload ảnh mới
+                try
                 {
-                    DeleteFile(question.ImageUrl);
-                    question.ImageUrl = await SaveFile(model.ImageFile, "questions");
-                }
-                else if (string.IsNullOrEmpty(Request.Form["ImageUrl"])) // Admin bấm nút xóa ảnh trên UI
-                {
-                    DeleteFile(question.ImageUrl);
-                    question.ImageUrl = null;
-                }
-
-                question.QuestionText = model.QuestionText;
-                question.Explanation = model.Explanation;
-                question.IsCritical = model.IsCritical;
-                question.LicenseCategoryId = model.LicenseCategoryId;
-                question.QuestionTopicId = model.QuestionTopicId;
-
-                _context.Answers.RemoveRange(question.Answers);
-
-                if (model.Answers != null)
-                {
-                    foreach (var a in model.Answers)
+                    // --- XỬ LÝ ẢNH CÂU HỎI ---
+                    if (model.ImageFile != null)
                     {
-                        string? finalAnsImg = null;
+                        if (!string.IsNullOrEmpty(question.ImageUrl) && question.ImageUrl.Contains("/uploads/"))
+                            DeleteFile(question.ImageUrl);
 
-                        if (a.ImageFile != null)
+                        question.ImageUrl = await SaveFile(model.ImageFile, "questions");
+                    }
+                    else
+                    {
+                        string? urlFromLibrary = Request.Form["ImageUrl"];
+                        if (!string.IsNullOrEmpty(urlFromLibrary))
                         {
-                            finalAnsImg = await SaveFile(a.ImageFile, "answers");
-                        }
-                        else if (!string.IsNullOrEmpty(a.imgUrl)) 
-                        {
-                            finalAnsImg = a.imgUrl;
-                        }
+                            if (question.ImageUrl != urlFromLibrary && !string.IsNullOrEmpty(question.ImageUrl) && question.ImageUrl.Contains("/uploads/"))
+                                DeleteFile(question.ImageUrl);
 
-                        question.Answers.Add(new Answer
+                            question.ImageUrl = urlFromLibrary;
+                        }
+                        else if (string.IsNullOrEmpty(urlFromLibrary) && model.ImageFile == null)
                         {
-                            AnswerText = a.AnswerText,
-                            IsCorrect = a.IsCorrect,
-                            ImageUrl = finalAnsImg
+                            if (!string.IsNullOrEmpty(question.ImageUrl) && question.ImageUrl.Contains("/uploads/"))
+                                DeleteFile(question.ImageUrl);
+
+                            question.ImageUrl = null;
+                        }
+                    }
+
+                    // --- CẬP NHẬT THÔNG TIN CƠ BẢN ---
+                    question.QuestionText = model.QuestionText;
+                    question.Explanation = model.Explanation;
+                    question.IsCritical = model.IsCritical;
+
+                    // --- CẬP NHẬT QUAN HỆ NHIỀU-NHIỀU (TOPIC) ---
+                    // Xóa các liên kết topic cũ
+                    question.QuestionTopics.Clear();
+
+                    // Thêm liên kết topic mới từ giao diện
+                    if (model.QuestionTopicId > 0)
+                    {
+                        question.QuestionTopics.Add(new QuestionTopicQuestion
+                        {
+                            QuestionTopicId = model.QuestionTopicId
                         });
                     }
-                }
 
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                    // --- XỬ LÝ ĐÁP ÁN ---
+                    if (question.Answers != null && question.Answers.Any())
+                    {
+                        _context.Answers.RemoveRange(question.Answers);
+                    }
+
+                    if (model.Answers != null)
+                    {
+                        foreach (var a in model.Answers)
+                        {
+                            string? finalAnsImg = a.ImageFile != null
+                                ? await SaveFile(a.ImageFile, "answers")
+                                : a.imgUrl;
+
+                            question.Answers.Add(new Answer
+                            {
+                                AnswerText = a.AnswerText,
+                                IsCorrect = a.IsCorrect,
+                                ImageUrl = finalAnsImg
+                            });
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "Có lỗi xảy ra khi lưu dữ liệu: " + ex.Message);
+                }
             }
 
-            ViewBag.Categories = await _context.LicenseCategories.ToListAsync();
-            ViewBag.Topics = await _context.QuestionTopics
-                .Where(t => t.LicenseCategoryId == model.LicenseCategoryId)
-                .ToListAsync();
+            var categories = await _context.LicenseCategories.ToListAsync();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name", model.LicenseCategoryId);
+            ViewBag.ImageUrl = question.ImageUrl;
 
             return View(model);
         }
 
+        // ================== DELETE ==================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            // 1. Lấy thông tin câu hỏi và toàn bộ đáp án liên quan
             var question = await _context.Questions
                 .Include(q => q.Answers)
+                // Không cần Include QuestionTopics vì Entity Framework Core 
+                // tự động xử lý Cascade Delete trên bảng trung gian nếu đã cấu hình
                 .FirstOrDefaultAsync(q => q.Id == id);
 
-            if (question == null)
-            {
-                return NotFound();
-            }
+            if (question == null) return NotFound();
 
             try
             {
-                // 2. Xóa ảnh của câu hỏi (nếu có)
                 if (!string.IsNullOrEmpty(question.ImageUrl))
                 {
                     DeleteFile(question.ImageUrl);
                 }
 
-                // 3. Duyệt danh sách đáp án để xóa ảnh của từng đáp án
                 if (question.Answers != null && question.Answers.Any())
                 {
                     foreach (var answer in question.Answers)
@@ -290,21 +354,16 @@ namespace UngDungOnThiBangLai.Controllers.Web
                             DeleteFile(answer.ImageUrl);
                         }
                     }
-                    // 4. Xóa các đáp án trong DB (Nếu bạn chưa cấu hình Cascade Delete trong DbContext)
                     _context.Answers.RemoveRange(question.Answers);
                 }
 
-                // 5. Xóa câu hỏi trong DB
                 _context.Questions.Remove(question);
-
                 await _context.SaveChangesAsync();
 
-                // Thêm thông báo thành công (TempData) nếu cần
                 TempData["Success"] = "Đã xóa câu hỏi và toàn bộ hình ảnh liên quan thành công!";
             }
             catch (Exception ex)
             {
-                // Xử lý lỗi nếu có
                 TempData["Error"] = "Có lỗi xảy ra khi xóa câu hỏi: " + ex.Message;
             }
 

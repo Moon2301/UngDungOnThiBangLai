@@ -31,6 +31,25 @@ namespace UngDungOnThiBangLai.Controllers.Web
             return View(await query.ToListAsync());
         }
 
+        [HttpGet]
+        public async Task<JsonResult> GetAllSigns(string search)
+        {
+            var query = _context.TrafficSigns.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(s => s.Name.Contains(search));
+            }
+
+            var result = await query.Select(s => new {
+                id = s.Id,
+                name = s.Name,
+                imageUrl = s.ImageUrl
+            }).ToListAsync();
+
+            return Json(result);
+        }
+
         // 2. THÊM MỚI
         [HttpGet]
         public IActionResult Create() => View();

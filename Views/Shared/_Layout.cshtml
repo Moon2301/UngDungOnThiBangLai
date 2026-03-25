@@ -40,6 +40,12 @@
                                 <i class="bi bi-signpost-2"></i> <span>Quản lý biển báo</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Exam" ? "active" : "")"
+                               asp-controller="Exam"
+                               asp-action="Index">
+                                <i class="bi bi-signpost-2"></i> <span>Thử nghiệm đề thi</span>
+                            </a>
                         <li class="nav-item mt-5">
                             <a class="nav-link text-warning" asp-controller="Account" asp-action="AdminLogin">
                                 <i class="bi bi-box-arrow-right"></i> Đăng xuất

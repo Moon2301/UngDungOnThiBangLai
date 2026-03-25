@@ -25,33 +25,25 @@ namespace UngDungOnThiBangLai.Models
         public int MinimumPassScore { get; set; } // Điểm tối thiểu để đậu, có thể dùng để kiểm tra khi chấm điểm đề thi
         public int TotalCriticalQuestions { get; set; }
 
-        public virtual ICollection<Question> Questions { get; set; }
+        public virtual ICollection<Question>? Questions { get; set; }
+        public virtual ICollection<QuestionTopic>? QuestionTopics { get; set; } = new List<QuestionTopic>();
     }
 
     public class Question
     {
         public int Id { get; set; }
-        public int LicenseCategoryId { get; set; }
 
         [Required]
         public string QuestionText { get; set; }
 
-        // Ảnh tự do (như sa hình, tình huống)
         public string? ImageUrl { get; set; }
-
-        // LIÊN KẾT BIỂN BÁO: Nếu câu hỏi dùng biển báo có sẵn
         public int? TrafficSignId { get; set; }
         public virtual TrafficSign? TrafficSign { get; set; }
-
         public string? Explanation { get; set; }
         public bool IsCritical { get; set; }
-        public string QuestionType { get; set; } // "MultipleChoice" hoặc "FillIn"
-        [Display(Name = "Chương")]
-        public int QuestionTopicId { get; set; }
-        [ForeignKey("QuestionTopicId")]
-        public virtual QuestionTopic? Topic { get; set; }
+        public string QuestionType { get; set; }
+        public virtual ICollection<QuestionTopicQuestion> QuestionTopics { get; set; } = new List<QuestionTopicQuestion>();
 
-        public virtual LicenseCategory LicenseCategory { get; set; }
         public virtual ICollection<Answer> Answers { get; set; }
     }
     public class QuestionTopic
@@ -59,24 +51,26 @@ namespace UngDungOnThiBangLai.Models
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Tên chương không được để trống")]
-        [Display(Name = "Tên chương/phân loại")]
+        [Required]
         public string Name { get; set; }
 
-        [Display(Name = "Mô tả")]
         public string? Description { get; set; }
-
-        [Display(Name = "Số câu hỏi trong đề thi")]
         public int NumberOfQuestionsInExam { get; set; }
 
-        // Khóa ngoại liên kết với Hạng bằng lái
-        [Display(Name = "Hạng bằng lái")]
         public int LicenseCategoryId { get; set; }
-
         [ForeignKey("LicenseCategoryId")]
         public virtual LicenseCategory? LicenseCategory { get; set; }
 
-        public virtual ICollection<Question> Questions { get; set; } 
+        public virtual ICollection<QuestionTopicQuestion> Questions { get; set; } = new List<QuestionTopicQuestion>();
+    }
+
+    public class QuestionTopicQuestion
+    {
+        public int QuestionId { get; set; }
+        public virtual Question Question { get; set; }
+
+        public int QuestionTopicId { get; set; }
+        public virtual QuestionTopic QuestionTopic { get; set; }
     }
 
     public class Answer
@@ -130,6 +124,7 @@ namespace UngDungOnThiBangLai.Models
 
     public class ExamQuestion
     {
+        public int Id { get; set; }
         public int ExamId { get; set; }
         public int QuestionId { get; set; }
         public int Order { get; set; } // Thứ tự xuất hiện trong đề

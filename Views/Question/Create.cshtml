@@ -1,97 +1,40 @@
 ﻿@model UngDungOnThiBangLai.Models.CreateQuestionViewModel
 
-@{
-    ViewData["Title"] = "Thêm câu hỏi mới";
-}
-
-<style>
-    .drop-zone {
-        border: 2px dashed #ccc;
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        background: #f8f9fa;
-        cursor: pointer;
-        transition: 0.3s;
-        min-height: 150px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .drop-zone.dragover {
-            border-color: #0d6efd;
-            background: #e9ecef;
-        }
-
-        .drop-zone:hover {
-            border: 2px solid #0d6efd;
-            background-color: #fff9e6;
-            box-shadow: 0 0 10px rgba(13, 110, 253, 0.2); 
-        }
-
-    .drop-zone-container:hover .drop-zone-content i {
-        transform: translateY(-5px);
-    }
-
-    .preview-img {
-        max-height: 150px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .answer-image-section {
-        display: none;
-        margin-top: 10px;
-    }
-
-    .small-zone {
-        padding: 10px;
-        min-height: 100px;
-    }
-</style>
-
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold"><i class="bi bi-plus-circle-fill text-primary"></i> THÊM CÂU HỎI MỚI</h2>
         <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
     </div>
 
-    <form asp-action="Create" method="post" enctype="multipart/form-data" class="shadow-sm">
+    <form asp-action="Create" method="post" enctype="multipart/form-data" id="mainForm">
         @Html.AntiForgeryToken()
-
         <div class="row">
             <div class="col-md-7">
                 <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 fw-bold text-primary">Nội dung văn bản</h5>
-                    </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold"><i class="bi bi-tags-fill text-primary"></i> Chương câu hỏi (Phân loại)</label>
-                            @* Sửa lại asp-for="QuestionTopicId" và thêm id để JS bắt sự kiện *@
-                            <select asp-for="QuestionTopicId" id="QuestionTopicId" class="form-select shadow-sm border-2" required>
-                                <option value="">-- Chọn hạng bằng trước --</option>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hạng bằng lái</label>
+                            <select asp-for="LicenseCategoryId" id="LicenseCategoryId" class="form-select border-2 shadow-sm"
+                                    asp-items="@(ViewBag.Categories as SelectList)" required>
+                                <option value="">-- Chọn hạng bằng --</option>
                             </select>
-                            <span asp-validation-for="QuestionTopicId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Chương câu hỏi</label>
+                            <select asp-for="QuestionTopicId" id="QuestionTopicId" class="form-select border-2 shadow-sm" required>
+                                <option value="">-- Đang tải... --</option>
+                            </select>
+                            @* INPUT ẨN NÀY RẤT QUAN TRỌNG *@
+                            <input type="hidden" id="SelectedTopicId" value="@Model.QuestionTopicId" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Tiêu đề câu hỏi</label>
-                            <textarea asp-for="QuestionText" class="form-control" rows="4" placeholder="Nhập nội dung câu hỏi tại đây..." required></textarea>
-                            <span asp-validation-for="QuestionText" class="text-danger"></span>
+                            <textarea asp-for="QuestionText" class="form-control" rows="4" required></textarea>
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-success">Giải thích (Nếu có)</label>
-                            <textarea asp-for="Explanation" class="form-control" rows="2" placeholder="Giải thích tại sao đáp án này đúng..."></textarea>
-                        </div>
-
                         <div class="form-check form-switch p-3 bg-light rounded border">
                             <input asp-for="IsCritical" class="form-check-input ms-0 me-2" type="checkbox" id="criticalCheck">
-                            <label class="form-check-label fw-bold text-danger" for="criticalCheck">
-                                <i class="bi bi-exclamation-triangle-fill"></i> Đánh dấu là câu hỏi ĐIỂM LIỆT
-                            </label>
+                            <label class="form-check-label fw-bold text-danger" for="criticalCheck">CÂU ĐIỂM LIỆT</label>
                         </div>
                     </div>
                 </div>
@@ -100,36 +43,23 @@
             <div class="col-md-5">
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 fw-bold text-primary">Cấu hình & Ảnh minh họa</h5>
+                        <h5 class="mb-0 fw-bold text-primary"> Ảnh câu hỏi</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Hạng bằng lái</label>
-                            <select asp-for="LicenseCategoryId" class="form-select shadow-sm" required>
-                                <option value="">-- Chọn hạng bằng --</option>
-                                @if (ViewBag.Categories != null)
-                                {
-                                    foreach (var cat in ViewBag.Categories)
-                                    {
-                                        <option value="@cat.Id">@cat.Name</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex justify-content-between mb-2">
                                 <label class="form-label fw-bold mb-0">Ảnh câu hỏi</label>
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-image d-none" id="remove-question-img">
-                                    <i class="bi bi-trash"></i> Xóa ảnh
+                                <button type="button" class="btn btn-sm btn-primary btn-open-library" data-target="question">
+                                    <i class="bi bi-images"></i> Thư viện
                                 </button>
                             </div>
                             <div class="drop-zone" id="question-drop-zone">
                                 <div class="drop-info">
-                                    <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
-                                    <p class="small mb-0 mt-2">Kéo thả hoặc click để chọn</p>
+                                    <i class="bi bi-cloud-arrow-up fs-2 text-primary"></i>
+                                    <p class="small mb-0">Kéo thả hoặc click</p>
                                 </div>
                                 <input type="file" asp-for="ImageFile" class="d-none sign-img-input" accept="image/*">
+                                <input type="hidden" name="ImageUrl" id="QuestionImageUrl" />
                                 <img src="#" class="preview-img d-none mt-2 mx-auto">
                             </div>
                         </div>
@@ -141,47 +71,34 @@
         <div class="card border-0 shadow-sm mb-5">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold text-primary">Danh sách đáp án</h5>
-                <button type="button" id="add-answer" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-circle"></i> Thêm lựa chọn
-                </button>
+                <button type="button" id="add-answer" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Thêm đáp án</button>
             </div>
             <div class="card-body">
                 <div id="answer-container">
-                    <div class="answer-item card p-3 mb-3 border border-light-subtle shadow-sm">
+                    <div class="answer-item card p-3 mb-3 border-light shadow-sm">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="input-group-text bg-white border-0">
-                                <input type="radio" name="CorrectAnswerIndex" value="0" checked class="form-check-input">
-                                <span class="ms-2 small fw-bold">Đúng</span>
-                            </div>
-                            <input type="text" name="Answers[0].AnswerText" class="form-control" placeholder="Nhập nội dung đáp án..." required>
-
+                            <input type="radio" name="CorrectAnswerIndex" value="0" checked class="form-check-input">
+                            <input type="text" name="Answers[0].AnswerText" class="form-control" placeholder="Đáp án..." required>
                             <div class="form-check form-switch mb-0">
-                                <input class="form-check-input toggle-image" type="checkbox" id="toggleImg0">
-                                <label class="form-check-label small text-muted" for="toggleImg0">Có ảnh</label>
+                                <input class="form-check-input toggle-image" type="checkbox">
+                                <label class="form-check-label small">Có ảnh</label>
                             </div>
-                            <button type="button" class="btn btn-outline-danger remove-answer btn-sm d-none"><i class="bi bi-trash"></i></button>
+                            <button type="button" class="btn btn-sm btn-primary btn-open-library d-none" data-target="answer-0">
+                                <i class="bi bi-images"></i>
+                            </button>
                         </div>
-
-                        <div class="answer-image-section">
-                            <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
-                                <p class="small mb-0 text-muted fw-bold">Ảnh đáp án</p>
-                                <button type="button" class="btn btn-link btn-sm text-danger btn-remove-image d-none p-0 text-decoration-none">
-                                    <i class="bi bi-x-circle"></i> Bỏ ảnh
-                                </button>
-                            </div>
+                        <div class="answer-image-section mt-3" style="display:none">
                             <div class="drop-zone small-zone">
-                                <div class="drop-info">
-                                    <p class="small mb-0 text-muted">Kéo thả hoặc click chọn ảnh</p>
-                                </div>
+                                <div class="drop-info"><p class="small mb-0">Kéo thả/Thư viện</p></div>
                                 <input type="file" name="Answers[0].ImageFile" class="d-none sign-img-input" accept="image/*">
+                                <input type="hidden" name="Answers[0].ImageUrl" id="AnswerImageUrl_0" />
                                 <img src="#" class="preview-img d-none mx-auto" style="max-height: 80px;">
                             </div>
                         </div>
                         <input type="hidden" name="Answers[0].IsCorrect" value="false">
                     </div>
                 </div>
-
-                <div class="mt-4 border-top pt-3 text-end">
+                <div class="text-end mt-4">
                     <button type="submit" class="btn btn-success btn-lg px-5 shadow"><i class="bi bi-save"></i> LƯU CÂU HỎI</button>
                 </div>
             </div>
@@ -189,54 +106,103 @@
     </form>
 </div>
 
+<div class="modal fade" id="signLibraryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Thư viện biển báo chuẩn</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <input type="text" id="searchSign" class="form-control mb-3" placeholder="Tìm kiếm biển báo...">
+                <div class="row g-2" id="signList"></div>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         $(document).ready(function () {
-            let answerIndex = 1;
+            // 1. CHUẨN BỊ BIẾN VÀ HÀM TẢI TOPIC
+            let answerIndex = @Model.Answers.Count;
+            const selectedTopicId = $('#SelectedTopicId').val(); // Lấy ID đã lưu trong Model
 
+            function loadTopics(categoryId, selectedId) {
+                const topicSelect = $('#QuestionTopicId');
+                topicSelect.empty().append('<option value="">-- Đang tải... --</option>');
+
+                if (categoryId) {
+                    $.ajax({
+                        url: '/Question/GetTopicsByCategory',
+                        type: 'GET',
+                        data: { categoryId: categoryId },
+                        success: function (data) {
+                            topicSelect.empty().append('<option value="">-- Chọn chương --</option>');
+                            $.each(data, function (index, item) {
+                                // Kiểm tra nếu ID trùng với ID đã chọn của câu hỏi thì gán 'selected'
+                                const isSelected = (item.id == selectedId) ? 'selected' : '';
+                                topicSelect.append(`<option value="${item.id}" ${isSelected}>${item.name}</option>`);
+                            });
+                        },
+                        error: function () {
+                            topicSelect.empty().append('<option value="">-- Lỗi tải chương --</option>');
+                        }
+                    });
+                } else {
+                    topicSelect.empty().append('<option value="">-- Chọn hạng bằng lái trước --</option>');
+                }
+            }
+
+            // 2. KÍCH HOẠT LOAD TOPIC KHI LOAD TRANG & KHI THAY ĐỔI HẠNG BẰNG
+            const initCategoryId = $('#LicenseCategoryId').val();
+            if (initCategoryId) {
+                loadTopics(initCategoryId, selectedTopicId);
+            }
+
+            $('#LicenseCategoryId').on('change', function () {
+                const catId = $(this).val();
+                loadTopics(catId, null); // Khi đổi hạng bằng thì không cần selectedId cũ
+            });
+
+            // 3. LOGIC XỬ LÝ ẢNH (DRAG & DROP)
             function initDragAndDrop(container) {
                 const dropZone = container.find('.drop-zone');
                 const fileInput = container.find('.sign-img-input');
                 const previewImg = container.find('.preview-img');
                 const dropInfo = container.find('.drop-info');
+                const removeBtn = container.closest('.mb-3, .answer-image-section').find('.btn-remove-image');
 
-                dropZone.off('click').on('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                dropZone.off('click').on('click', function () {
                     fileInput.trigger('click');
                 });
 
-                fileInput.off('click').on('click', function (e) {
-                    e.stopPropagation();
-                });
-
-                dropZone.off('dragover').on('dragover', function (e) {
+                dropZone.on('dragover', function (e) {
                     e.preventDefault();
                     $(this).addClass('dragover');
                 });
 
-                dropZone.off('dragleave drop').on('dragleave drop', function () {
+                dropZone.on('dragleave drop', function () {
                     $(this).removeClass('dragover');
                 });
 
-                dropZone.off('drop').on('drop', function (e) {
+                dropZone.on('drop', function (e) {
                     e.preventDefault();
-                    $(this).removeClass('dragover');
                     const files = e.originalEvent.dataTransfer.files;
                     if (files.length > 0) {
                         fileInput[0].files = files;
-                        handlePreview(files[0], previewImg, dropInfo);
+                        handlePreview(files[0], previewImg, dropInfo, removeBtn);
                     }
                 });
 
-                fileInput.off('change').on('change', function () {
-                    if (this.files && this.files.length > 0) {
-                        handlePreview(this.files[0], previewImg, dropInfo);
+                fileInput.on('change', function () {
+                    if (this.files.length > 0) {
+                        handlePreview(this.files[0], previewImg, dropInfo, removeBtn);
                     }
                 });
             }
 
             function handlePreview(file, previewImg, dropInfo, removeBtn) {
+                if (!file.type.startsWith('image/')) return;
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     previewImg.attr('src', e.target.result).removeClass('d-none');
@@ -246,118 +212,52 @@
                 reader.readAsDataURL(file);
             }
 
-            // Sự kiện nút xóa ảnh
-            $(document).on('click', '.btn-remove-image', function() {
+            // Xóa ảnh (Edit)
+            $(document).on('click', '.btn-remove-image', function(e) {
+                e.preventDefault();
                 const container = $(this).closest('.mb-3, .answer-image-section');
-                const fileInput = container.find('.sign-img-input');
-                const previewImg = container.find('.preview-img');
-                const dropInfo = container.find('.drop-info');
-
-                fileInput.val('');
-                previewImg.attr('src', '#').addClass('d-none');
-                dropInfo.removeClass('d-none');
+                container.find('.sign-img-input').val('');
+                container.find('.preview-img').attr('src', '#').addClass('d-none');
+                container.find('.drop-info').removeClass('d-none');
                 $(this).addClass('d-none');
-
-                // Trường hợp trang Edit
                 container.find('input[type="hidden"][name$=".ImageUrl"]').val('');
             });
 
-            // Khởi tạo cho ảnh câu hỏi
+            // Khởi tạo các vùng ảnh hiện có
             initDragAndDrop($('#question-drop-zone').parent());
-
-            // Toggle hiện/ẩn vùng ảnh đáp án
-            $(document).on('change', '.toggle-image', function () {
-                const section = $(this).closest('.answer-item').find('.answer-image-section');
-                if (this.checked) {
-                    section.slideDown(200);
-                } else {
-                    section.slideUp(200);
-                    section.find('.btn-remove-image').trigger('click'); // Tự động xóa ảnh khi tắt switch
-                }
+            $('.answer-item').each(function() {
+                initDragAndDrop($(this).find('.answer-image-section'));
             });
 
-            // Thêm đáp án mới
-            $("#add-answer").click(function () {
-                let html = `
-                    <div class="answer-item card p-3 mb-3 border border-light-subtle shadow-sm">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="input-group-text bg-white border-0">
-                                <input type="radio" name="CorrectAnswerIndex" value="${answerIndex}" class="form-check-input">
-                                <span class="ms-2 small fw-bold">Đúng</span>
-                            </div>
-                            <input type="text" name="Answers[${answerIndex}].AnswerText" class="form-control" placeholder="Nhập nội dung đáp án..." required>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input toggle-image" type="checkbox" id="toggleImg${answerIndex}">
-                                <label class="form-check-label small text-muted" for="toggleImg${answerIndex}">Có ảnh</label>
-                            </div>
-                            <button type="button" class="btn btn-outline-danger remove-answer btn-sm"><i class="bi bi-trash"></i></button>
-                        </div>
-                        <div class="answer-image-section">
-                            <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
-                                <p class="small mb-0 text-muted fw-bold">Ảnh đáp án</p>
-                                <button type="button" class="btn btn-link btn-sm text-danger btn-remove-image d-none p-0 text-decoration-none">
-                                    <i class="bi bi-x-circle"></i> Bỏ ảnh
-                                </button>
-                            </div>
-                            <div class="drop-zone small-zone">
-                                <div class="drop-info">
-                                    <p class="small mb-0 text-muted">Kéo thả hoặc click chọn ảnh</p>
-                                </div>
-                                <input type="file" name="Answers[${answerIndex}].ImageFile" class="d-none sign-img-input" accept="image/*">
-                                <img src="#" class="preview-img d-none mx-auto" style="max-height: 80px;">
-                            </div>
-                        </div>
-                        <input type="hidden" name="Answers[${answerIndex}].IsCorrect" value="false">
-                    </div>`;
-
-                const $newItem = $(html);
-                $("#answer-container").append($newItem);
-                initDragAndDrop($newItem.find('.answer-image-section'));
-                answerIndex++;
-            });
-
+            // 4. QUẢN LÝ ĐÁP ÁN (ADD/REMOVE/RE-INDEX)
             $(document).on("click", ".remove-answer", function () {
-                $(this).closest(".answer-item").fadeOut(300, function() { $(this).remove(); });
+                const item = $(this).closest(".answer-item");
+                item.fadeOut(200, function() {
+                    $(this).remove();
+                    reIndexAnswers();
+                });
             });
 
-            $("form").submit(function () {
+            function reIndexAnswers() {
+                $('.answer-item').each(function(idx) {
+                    $(this).find('input[type="radio"]').val(idx);
+                    $(this).find('input[type="text"]').attr('name', `Answers[${idx}].AnswerText`);
+                    $(this).find('input[type="file"]').attr('name', `Answers[${idx}].ImageFile`);
+                    $(this).find('input[type="hidden"][name$=".IsCorrect"]').attr('name', `Answers[${idx}].IsCorrect`);
+                    $(this).find('input[type="hidden"][name$=".ImageUrl"]').attr('name', `Answers[${idx}].ImageUrl`);
+                    $(this).find('.toggle-image').attr('id', `toggleImg${idx}`);
+                    $(this).find('label.toggle-image').attr('for', `toggleImg${idx}`);
+                });
+                answerIndex = $('.answer-item').length;
+            }
+
+            $("#mainForm").submit(function () {
                 let selectedIndex = $("input[name='CorrectAnswerIndex']:checked").val();
                 $("input[name$='.IsCorrect']").val("false");
                 if (selectedIndex !== undefined) {
                     $(`input[name='Answers[${selectedIndex}].IsCorrect']`).val("true");
                 }
             });
-
-            // Khởi tạo cho đáp án mặc định
-            $('.answer-item').each(function() {
-                initDragAndDrop($(this).find('.answer-image-section'));
-            });
-        });
-                $('#LicenseCategoryId').change(function () {
-            var categoryId = $(this).val();
-            var topicSelect = $('#QuestionTopicId');
-
-            // Reset dropdown chương
-            topicSelect.empty().append('<option value="">-- Đang tải chương... --</option>');
-
-            if (categoryId) {
-                $.ajax({
-                    url: '/Question/GetTopicsByCategory', // Đường dẫn đến API trong Controller
-                    type: 'GET',
-                    data: { categoryId: categoryId },
-                    success: function (data) {
-                        topicSelect.empty().append('<option value="">-- Chọn chương --</option>');
-                        $.each(data, function (index, item) {
-                            topicSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-                    },
-                    error: function() {
-                        topicSelect.empty().append('<option value="">-- Lỗi tải dữ liệu --</option>');
-                    }
-                });
-            } else {
-                topicSelect.empty().append('<option value="">-- Chọn hạng bằng trước --</option>');
-            }
         });
     </script>
 }

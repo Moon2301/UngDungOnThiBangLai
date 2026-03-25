@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using UngDungOnThiBangLai.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +34,29 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Chạy database seeding khi ứng dụng khởi động
+builder.Services.AddScoped<IDataSeedService, DataSeedService>();
+builder.Services.AddScoped<IExamService, ExamService>();
+
 
 var app = builder.Build();
+
+// Tạo một scope để lấy dịch vụ IDataSeedService và chạy hàm SeedAllAsync
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var seeder = services.GetRequiredService<IDataSeedService>();
+        // Chạy hàm Seed (vì là async nên dùng .Wait() hoặc gọi trong một Task)
+        await seeder.SeedAllAsync();
+        Console.WriteLine(">>> Seed dữ liệu thành công!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($">>> Lỗi khi Seed dữ liệu: {ex.Message}");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -45,7 +67,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

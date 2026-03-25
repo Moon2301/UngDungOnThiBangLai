@@ -9,6 +9,7 @@
         public bool IsCritical { get; set; }
         public string QuestionType { get; set; } = "MultipleChoice";
         public int QuestionTopicId { get; set; }
+        public string? ImageURL { get; set; }
 
         // Hứng file ảnh tải lên
         public IFormFile? ImageFile { get; set; }

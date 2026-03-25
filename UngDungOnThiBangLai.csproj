@@ -20,8 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\API\" />
-    <Folder Include="Models\dtos\" />
     <Folder Include="wwwroot\images\questions\" />
   </ItemGroup>
 
