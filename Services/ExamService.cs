@@ -55,8 +55,8 @@ namespace UngDungOnThiBangLai.Services
             finalQuestions.AddRange(criticalQuestions);
 
             // Kiểm tra an toàn: Nếu Database chưa đủ câu hỏi thì báo lỗi tránh tạo đề hỏng
-            // if (finalQuestions.Count < category.TotalQuestions) 
-            //    throw new Exception($"Không đủ câu hỏi trong ngân hàng! Cần {category.TotalQuestions}, hiện có {finalQuestions.Count}");
+            if (finalQuestions.Count < category.TotalQuestions)
+                throw new Exception($"Không đủ câu hỏi trong ngân hàng! Cần {category.TotalQuestions}, hiện có {finalQuestions.Count}");
 
             // 4. TẠO RECORD ĐỀ THI
             var exam = new Exam

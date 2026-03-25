@@ -17,11 +17,9 @@ namespace UngDungOnThiBangLai.Controllers.Web
         public async Task<IActionResult> Index()
         {
             var categories = await _context.LicenseCategories
-                // ĐÃ XÓA: .Include(c => c.Questions) 
-                // THAY BẰNG: Include bảng trung gian nếu View của bồ cần đếm số câu hỏi thực tế đang map
-                .Include(c => c.QuestionTopics)
-                    .ThenInclude(qt => qt.Questions)
+                .Include(c => c.QuestionTopics) 
                 .ToListAsync();
+
             return View(categories);
         }
 
@@ -86,6 +84,7 @@ namespace UngDungOnThiBangLai.Controllers.Web
                     {
                         foreach (var topicFromForm in model.QuestionTopics)
                         {
+                            topicFromForm.LicenseCategoryId = id;
                             // Tìm Topic tương ứng đã được nạp từ DB
                             var existingTopic = dbCategory.QuestionTopics
                                 .FirstOrDefault(t => t.Id == topicFromForm.Id);
@@ -110,7 +109,6 @@ namespace UngDungOnThiBangLai.Controllers.Web
 
                         foreach (var toRemove in topicsToRemove)
                         {
-                            // --- ĐIỂM THAY ĐỔI QUAN TRỌNG ---
                             // Kiểm tra xem Topic này có đang được map với Câu hỏi nào trong bảng trung gian không
                             bool hasQuestions = await _context.Set<QuestionTopicQuestion>()
                                                               .AnyAsync(qtq => qtq.QuestionTopicId == toRemove.Id);

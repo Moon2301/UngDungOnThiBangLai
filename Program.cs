@@ -38,6 +38,17 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IDataSeedService, DataSeedService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // Cho phép đúng cổng của Vite React
+                  .AllowAnyHeader()  // Cho phép mọi loại Header (JSON, Text...)
+                  .AllowAnyMethod(); // Cho phép mọi phương thức (GET, POST, PUT, DELETE)
+        });
+});
+
 
 var app = builder.Build();
 
@@ -57,6 +68,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($">>> Lỗi khi Seed dữ liệu: {ex.Message}");
     }
 }
+
+app.UseCors("AllowReactApp");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
