@@ -1,4 +1,4 @@
-﻿@model UngDungOnThiBangLai.Models.TrafficSignViewModel
+@model UngDungOnThiBangLai.Models.TrafficSignViewModel
 
 @{
     ViewData["Title"] = "Thêm biển báo mới";
@@ -71,18 +71,6 @@
 
 @section Scripts {
     <script>
-        $("#signImgInput").change(function () {
-            const file = this.files[0];
-            if (file) {
-                let reader = new FileReader();
-                reader.onload = function (e) {
-                    $("#signImgPreview").attr("src", e.target.result);
-                    $("#signPreviewContainer").removeClass("d-none");
-                    $("#placeholder").addClass("d-none");
-                }
-                reader.readAsDataURL(file);
-            }
-        });
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('signImgInput');
         const imgPreview = document.getElementById('signImgPreview');
